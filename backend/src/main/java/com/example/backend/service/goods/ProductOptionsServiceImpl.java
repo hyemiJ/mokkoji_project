@@ -1,0 +1,46 @@
+package com.example.backend.service.goods;
+
+import com.example.backend.entity.goods.ProductOptions;
+import com.example.backend.entity.goods.ProductOptionsId;
+import com.example.backend.repository.goods.ProductOptionsRepository;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class ProductOptionsServiceImpl implements ProductoptionsService {
+	private final ProductOptionsRepository repository;
+	
+	@Override
+	public List<ProductOptions> findAll() {
+		return repository.findAll();
+	}
+
+	@Override
+	public List<ProductOptions> findByProductId(Long id) {
+		
+		return repository.findByProductId(id);
+	}
+
+	@Override
+	public ProductOptions findById(ProductOptionsId id) {
+		
+		return repository.findById(id).get();
+	}
+
+	@Override
+	public void save(ProductOptions options) {
+		repository.save(options);
+
+	}
+
+	@Override
+	public void deleteById(ProductOptionsId id) {
+		repository.deleteById(id);
+
+	}
+
+}
