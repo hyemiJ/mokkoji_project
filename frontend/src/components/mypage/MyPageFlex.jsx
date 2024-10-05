@@ -1,25 +1,24 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faUser } from "@fortawesome/free-regular-svg-icons";
 import { faHome, faMobileScreenButton } from "@fortawesome/free-solid-svg-icons";
-import '../../css/mypage/MyPageMain.css';
-
-// import userInfo from "../login/UserInforData";
+import '../../css/mypage/MyPageUser.css';
 
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-function MyPageFlex() {
-
-    const user = JSON.parse(sessionStorage.getItem("LoginUserInfo"));
+function MyPageFlex({ userMain }) {
 
     return (
         <div className='MyInfoFlex'>
             <div className="MyInfo">
-                <h1>{user.id}, 안녕하세요!</h1>
+                <h1>{userMain.userId}, 안녕하세요!</h1>
 
                 <div className="MyInfoSet">
                     <Link to='/mypage/set'>
-                        <button className="MyInfoSetting">내 정보 수정</button>
+                        <button className="MyInfoSetting">회원정보 관리</button>
+                    </Link>
+                    <Link to='/mypage/address'>
+                        <button className="MyInfoSetting">주소지 관리</button>
                     </Link>
                 </div>
 
@@ -31,7 +30,7 @@ function MyPageFlex() {
                         <FontAwesomeIcon icon={faUser} />
                     </div>
                     <span>
-                        {user.name}
+                        {userMain.name}
                     </span>
                 </div>
                 <div>
@@ -39,7 +38,7 @@ function MyPageFlex() {
                         <FontAwesomeIcon icon={faMobileScreenButton} />
                     </div>
                     <span>
-                        {user.phoneNumber}
+                        {userMain.phoneNumber}
                     </span>
                 </div>
                 <div>
@@ -47,7 +46,7 @@ function MyPageFlex() {
                         <FontAwesomeIcon icon={faEnvelope} />
                     </div>
                     <span>
-                        {user.email}@{user.emailType}
+                        {userMain.email}
                     </span>
                 </div>
                 <div>
@@ -55,11 +54,12 @@ function MyPageFlex() {
                         <FontAwesomeIcon icon={faHome} />
                     </div>
                     <span>
-                        {user.address}
+                        ({userMain.postalCode})&nbsp;{userMain.streetAddress}
                         <br />
-                        {user.addressDetail}
+                        {userMain.detailedAddress}
                     </span>
                 </div>
+
             </div>
 
         </div>

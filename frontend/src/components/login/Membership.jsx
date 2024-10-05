@@ -10,73 +10,51 @@ import About from './../main/About';
 import Background from './../main/Backgroud';
 import userInfo from './UserInforData';
 import { all } from 'axios';
+import { apiCall } from '../../service/apiService';
 
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
 const Membership = () => {
-    // 방법 2.
-    // let max = 0;
-    // for (let i = 0; i < userInfo.length; i++) {
-    //     if (max < userInfo[i].index)
-    //         max = userInfo[i].index;
-    // }
-    // const userDateIndex = max + 1;
-
-    // 가입자 index 구하고, 새로 가입하는 유저의 경우 index값 +1 한 뒤 저장 
-    let userDateIndex = 1;
-
-    if (userInfo.length > 0)
-        userDateIndex = userInfo[userInfo.length - 1].index + 1;
 
     // 사용자 입력값 저장 객체
     const formData = useRef({
-        index: '',
+        //  index: '',
         name: '',
-        zoneCode: '',
-        address: '',
-        addressDetail: '',
+        postalCode: '',
+        streetAddress: '',
+        detailedAddress: '',
         gender: '',
         phoneNumber: '',
         email: '',
         emailType: '',
-        id: '',
-        pw: '',
-        loginCount: '',
-        totalPurchaseCount: '',
-        totalPurchaseAmount: '',
-        lastLoginDate: '',
-        mypage: {
-            history: [
-
-            ],
-            Reservation: [
-                // { reserveItem: '', name: '', date: '', adult: '', teenager: '' },
-            ],
-            review: '',
-            isLike: [],
-            basket: [
-
-            ]
-        }
+        userId: '',
+        password: '',
+        birthDate: '',
+        createdAt: '',
+        checkPw: ''
     })
+    console.log(formData);
 
     // 사용자 입력값 유효성 검사 후 상태값 저장하는 객체 
     const formErrors = useRef({
         name: "",
-        id: "",
-        pw: "",
-        pwCheck: "",
-        address: "",
-        zoneCode: "",
-        addressDetail: "",
+        userId: "",
+        password: "",
+        checkPw: "",
+        streetAddress: "",
+        postalCode: "",
+        detailedAddress: "",
         firstNumber: "",
         secondNumber: "",
         lastNumber: "",
+        birthDate: "",
         gender: "",
         email: "",
         emailType: "",
         clausearea: ""
     });
+
+    console.log(formErrors);
 
     // useRef 사용으로 인해 랜더링이 발생되지 않아 예외 처리가 불가능 하여, 임의의 stat 생성하여 강제로 랜더링 발생시킴
     const [forceUpdater, forceUpdate] = useState(false);
@@ -145,8 +123,8 @@ const Membership = () => {
         formData.current[name] = value;
 
         // id에서 값이 input 창에 값이 없으면 유효성 검사 확인하는 객체에 false 저장 
-        if (name === 'id' && value === '') {
-            formErrors.current.id = false;
+        if (name === 'userId' && value === '') {
+            formErrors.current.userId = false;
         }
         // 성별의 경우 유효성 검사 기본 상태가 빈 문자열임으로, 클릭이 발생하면(name===gender)라면 유효성 검사 확인 객체는 true가 됨. 
         else if (name === 'gender') {
@@ -177,15 +155,15 @@ const Membership = () => {
 
     // 유효성 검사를 위한 정규식 객체 형태로 저장 
     const [terms, setTerms] = useState({
-        userID: /^(?=.*[a-z])(?=.*[0-9])[a-z0-9]+$/,
-        userPSW: /^(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*])[a-z0-9!@#$%^&*]+$/,
+        userId: /^(?=.*[a-z])(?=.*[0-9])[a-z0-9]+$/,
+        password: /^(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*])[a-z0-9!@#$%^&*]+$/,
         userName: /^[가-힣]+$/,
         firstNum: /^\d+$/,
         secondNum: /^\d+$/,
         lastNumber: /^\d+$/,
         email: /^[a-z0-9\s]+$/,
         emailType: /^[a-zA-Z]+\.[a-zA-Z]+$/,
-
+        birthDate: /^\d{4}-\d{2}-\d{2}$/
     }); //terms
 
     // 정규식에 길이 조사가 정상작동하지 않아, 이용자가 입력한 정보 길이 조사하는 함수 구현 
@@ -194,14 +172,16 @@ const Membership = () => {
         switch (name) {
             case 'name':
                 return (inputLength < 6 && inputLength >= 2);
-            case 'id':
+            case 'userId':
                 return (inputLength < 15 && inputLength >= 7);
-            case 'pw':
+            case 'password':
                 return (inputLength < 15 && inputLength >= 7);
-            case 'pwCheck':
-                return (value === formData.current.pw);
-            case 'addressDetail':
+            case 'checkPw':
+                return (value === formData.current.password);
+            case 'detailedAddress':
                 return inputLength > 2;
+            case 'birthDate':
+                return !isNaN(Date.parse(value));
             case 'firstNumber':
                 return (inputLength < 6 && inputLength >= 2);
             case 'secondNumber':
@@ -216,20 +196,24 @@ const Membership = () => {
                 return false;
         }
     };
+    console.log(formData.current.password);
+    console.log(formData.current.checkPw);
 
     // 입력값이 정규식과 길이가 각 조건에 부합하면 true, 아니면 false 값 저장 
     const validate = (name, value) => {
         switch (name) {
             case 'name':
                 return (value !== '' && terms.userName.test(value) && CheckLength(name, value));
-            case 'id':
-                return (value !== '' && terms.userID.test(value) && CheckLength(name, value));
-            case 'pw':
-                return (value !== '' && terms.userPSW.test(value) && CheckLength(name, value));
-            case 'pwCheck':
+            case 'userId':
+                return (value !== '' && terms.userId.test(value) && CheckLength(name, value));
+            case 'password':
+                return (value !== '' && terms.password.test(value) && CheckLength(name, value));
+            case 'checkPw':
                 return (value !== '' && CheckLength(name, value));
-            case 'addressDetail':
+            case 'detailedAddress':
                 return (value !== '' && CheckLength(name, value));
+            case 'birthDate':
+                return (value !== '' && terms.birthDate.test(value) && CheckLength(name, value));
             case 'firstNumber':
                 return (value !== '' && terms.firstNum.test(value) && CheckLength(name, value));
             case 'secondNumber':
@@ -245,30 +229,19 @@ const Membership = () => {
         }
     };
 
-    // id 중복 검사 관련 
-    // const [btnAble, setBtnAble] = useState(false)
-    // id 유효성 검사 값이 true인 경우 버튼 활성화 아닌 경우 비활성화 
-    // const IdCheck = () => {
-    //     if (terms.userID.test(formData.current.id)) {
-    //         setBtnAble(true);
-    //     }
-    //     else {
-    //         setBtnAble(false);
-    //     }
 
-    // }
 
     // 비밀번호 확인먼저 입력한경우 
 
     const doubleCheckPw = useRef(null);
     const pwR = useRef(null)
     const NoinputPw = () => {
-        if (formErrors.current.pw === '') {
+        if (formErrors.current.password === '') {
             alert('⚠️ 비밀번호를 먼저 입력하세요');
             doubleCheckPw.current.value = '';
             pwR.current.focus();
         }
-        else if (formErrors.current.pw === false) {
+        else if (formErrors.current.password === false) {
             alert('⚠️ 조건에 맞게 비밀번호를 입력하세요');
             doubleCheckPw.current.value = '';
             pwR.current.focus();
@@ -276,76 +249,99 @@ const Membership = () => {
     }
 
 
-
-    // 목 데이터에서 유저정보 가져옴 
-    const allUserData = JSON.parse(localStorage.getItem('userInfo'));
-
-
     // 아이디 중복체크 확인 상태값 
     const [isOkIdChek, setisOkIdChek] = useState(false);
-
-    //아이디 중복 검사 
     const inputR = useRef(null);
+
     const IsSameId = () => {
-        const userExists = allUserData.find(it => it.id === formData.current.id);
-        setisOkIdChek(true);
+        let url1 = "/Login/selectOne";
+        const data2 = { userId: inputR.current.value };
+        apiCall(url1, 'POST', data2, null)
+            .then((response) => {
+                console.log("아이디 중복검사 API 호출 성공:", response);  // 응답 전체 출력
+                console.log("아이디 중복검사 응답 상태 코드:", response.status);  // 상태 코드 출력
 
-        if (userExists) {
 
-            alert('⚠️ 동일한 아이디가 존재합니다. 아이디를 다시 입력해주세요');
-            setTimeout(() => { // setTimeout을 사용하여 다음 렌더링 사이클에서 값 변경
-                inputR.current.value = ''; // 값 비우기
+                if (response.data === false && response.status===200) {
+                    alert('⚠️ 동일한 아이디가 존재합니다. 아이디를 다시 입력해주세요');
+                    setTimeout(() => { // setTimeout을 사용하여 다음 렌더링 사이클에서 값 변경
+                        inputR.current.value = ''; // 값 비우기
+                    }, 0);
+                    formErrors.current.userId = false;
+                    setisOkIdChek(false)
+                }
+                else if (formErrors.current.userId === false || formData.current.userId === '') {
+                    alert('⚠️ 조건에 맞게 아이디를 다시 입력하세요')
+                    setTimeout(() => { // setTimeout을 사용하여 다음 렌더링 사이클에서 값 변경
+                        inputR.current.value = ''; // 값 비우기
+                    }, 0);
+                    formErrors.current.userId = false;
+                    setisOkIdChek(false);
+                } 
 
-            }, 0);
-            formErrors.current.id = false;
-            setisOkIdChek(false)
-        }
-        else if (formErrors.current.id === false || formData.current.id === '') {
-            alert('⚠️ 조건에 맞게 아이디를 다시 입력하세요')
-            setTimeout(() => { // setTimeout을 사용하여 다음 렌더링 사이클에서 값 변경
-                inputR.current.value = ''; // 값 비우기
-            }, 0);
-            formErrors.current.id = false;
-            setisOkIdChek(false);
-        }
+            }).catch((err) => {
+             const errStatus = err.status
 
-        else {
-            alert('🎉 동일한 아이디가 존재하지 않습니다 회원가입을 진행해주세요');
-            formErrors.current.id = true;
-            setisOkIdChek(true);
+             if(errStatus === 502){
+                alert('🎉 동일한 아이디가 존재하지 않습니다 회원가입을 진행해주세요');
+                formErrors.current.userId = true;
+                setisOkIdChek(true);
+             } else if (errStatus === 500 || errStatus === 404 ){
+                alert('⚠️ 서버에 문제가 발생하였습니다. 잠시 후 다시 시도해주세요');
+                setTimeout(() => { // setTimeout을 사용하여 다음 렌더링 사이클에서 값 변경
+                    inputR.current.value = ''; // 값 비우기
+                }, 0);
+                formErrors.current.userId = false;
+                setisOkIdChek(false);
+             } else{
+                console.log("아이디 찾기 응답 객체에 상태 코드가 없습니다 " , err.message);
+                alert('⚠️ 네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                setTimeout(() => { // setTimeout을 사용하여 다음 렌더링 사이클에서 값 변경
+                    inputR.current.value = ''; // 값 비우기
+                }, 0);
+                formErrors.current.userId = false;
+                setisOkIdChek(false);
+            }
 
-        }
-    };
+            })
+
+    }
+
+
+
+
+
 
 
     // ==== 주소
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [address, setAddress] = useState('');
-    const [zoneCode, setZoneCode] = useState('');
+    const [streetAddress, setstreetAddress] = useState('');
+    const [postalCode, setpostalCode] = useState('');
 
     const handleComplete = (data) => {
         let fullAddress = data.address;
         let extraAddress = '';
 
+        // 도로명 주소일 경우 extraAddress 설정
         if (data.addressType === 'R') {
             if (data.bname !== '') {
-                extraAddress += data.bname;
+                extraAddress += data.bname; // 동 이름
             }
             if (data.buildingName !== '') {
-                extraAddress += (extraAddress !== '' ? `, ${data.buildingName}` : data.buildingName);
+                extraAddress += (extraAddress !== '' ? `, ${data.buildingName}` : data.buildingName); // 건물 이름
             }
-            fullAddress += (extraAddress !== '' ? ` (${extraAddress})` : '');
+            fullAddress += (extraAddress !== '' ? ` (${extraAddress})` : ''); // 전체 주소
         }
 
-        setZoneCode(data.zonecode);
-        setAddress(fullAddress);
+        setpostalCode(data.zonecode);
+        setstreetAddress(fullAddress);
 
-        formData.current.zoneCode = data.zonecode;
-        formErrors.current.zoneCode = true;
+        formData.current.postalCode = data.zonecode;
+        formErrors.current.postalCode = true;
 
-        formData.current.address = fullAddress;
-        formErrors.current.address = true;
+        formData.current.streetAddress = fullAddress;
+        formErrors.current.streetAddress = true;
 
         setIsModalOpen(false);
 
@@ -356,6 +352,11 @@ const Membership = () => {
         setIsModalOpen(true);
     }
 
+    // 생년월일
+    const [userbirthday, setuserbirtyday] = useState('');
+    const birtydayR = useRef(null);
+
+
     // 가입 버튼 
     const navi = useNavigate();
     const goLoginPage = () => {
@@ -363,28 +364,47 @@ const Membership = () => {
         const isCheck = Object.values(formErrors.current).every(value => value === true);
 
         // 날짜 저장 
-        const today = new Date()
-        const date = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-        formData.current.lastLoginDate = date;
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0'); // 월을 2자리로
+        const day = String(today.getDate()).padStart(2, '0'); // 일을 2자리로
+        const date = `${year}-${month}-${day}`; // yyyy-MM-dd 형식으로 저장
+        formData.current.createdAt = date;
 
         if (isCheck && isOkIdChek === true) {
             // 분리되어 있던 핸드폰 번호 합치기 
             const phone = `${formData.current.firstNumber}-${formData.current.secondNumber}-${formData.current.lastNumber}`;
 
             formData.current.phoneNumber = phone;
-            formData.current.index = userDateIndex;
+            console.log(formData.current.phoneNumber);
+            //formData.current.index = userDateIndex;
 
             delete formData.current.firstNumber;
             delete formData.current.secondNumber;
             delete formData.current.lastNumber;
 
-            //세션스토리지에 값 저장 
-            userInfo.push(formData.current);
-            sessionStorage.setItem('userInfo', 'formData');
+            // 분리되어 있던 이메일 합치기 
+            const usereEmail = `${formData.current.email}@${formData.current.emailType}`
+            formData.current.email = usereEmail;
+            delete formData.current.emailType;
 
-            navi('/Login');
-            alert(`${formData.current.name}님 회원가입을 축하합니다.`);
-            setisOkIdChek(false);
+            let url = "/Login/Membership";
+            const data = formData.current;
+            apiCall(url, 'POST', data, null)
+                .then((response) => {
+           
+                    alert(`${formData.current.name}님 회원가입을 축하합니다.`);
+                    navi('/Login');
+                    setisOkIdChek(false);
+
+                }).catch((err) => {
+                   if(err.status === 502 || err.status === 500 ||   err.status === 404){
+                    alert("⚠️ 네트워크 에러로 인해 회원 가입을 다시 진행해주세요");
+                    navi('/Login/Membership');
+                   }
+
+                })
+
 
         }
         else if (isOkIdChek === false) {
@@ -398,6 +418,7 @@ const Membership = () => {
             window.scrollTo({ top: '30px', behavior: 'smooth' });
         }
     }
+
 
     return (
         <div className="body">
@@ -447,14 +468,13 @@ const Membership = () => {
                         <div className='innerclausearea'>
                             <h5>회원가입 약관에 모두 동의 합니다.</h5>
                             <input type='checkbox' name="allCheck" checked={isAllChecked} onChange={(e) => AllCheck(e)} />
-
                         </div>
                     </div>
                     <hr />
 
                     <h3>개인정보를 입력해주세요</h3>
-                    <form className="formcontainer" id='membership' onSubmit={validate}>
-                        <label for="name">이름</label>
+                    <form className="formcontainer" id='membership' onSubmit={validate} method='post'>
+                        <label htmlFor="name">이름</label>
                         <input type="text"
                             placeholder='2글자 이상 5글자 이하 이름을 입력해주세요'
                             name="name"
@@ -469,23 +489,21 @@ const Membership = () => {
                         <p>에러</p>
 
 
-                        <label for="id">아이디</label>
+                        <label htmlFor="userId">아이디</label>
                         <div className="rowarea">
                             <input type="text"
-                                name="id"
-                                id="id"
+                                name="userId"
+                                id="userId"
                                 onChange={getInputInfo}
                                 maxLength={13}
                                 placeholder='7~13글자 이하 영문 숫자 조합으로 아이디를 입력해주세요'
                                 // onBlur={IdCheck}
                                 ref={inputR}
                                 style={{
-                                    borderBottom: formErrors.current.id === false ? '1px solid red' : '1px solid #aaaaaa'
+                                    borderBottom: formErrors.current.userId === false ? '1px solid red' : '1px solid #aaaaaa'
                                 }}
                             />
                             <button
-                                // disabled={!btnAble}
-
                                 type='button'
                                 onClick={IsSameId}
                             >아이디중복 검사</button>
@@ -493,24 +511,24 @@ const Membership = () => {
                         <p>에러</p>
 
 
-                        <label for="pw">비밀번호</label>
+                        <label htmlFor="password">비밀번호</label>
                         <input type="text"
                             placeholder='7~14글자 이하 영문 숫자 특수문자 조합으로 비밀번호를 입력해주세요'
                             maxLength={14}
-                            name="pw"
-                            id="pw"
+                            name="password"
+                            id="password"
                             ref={pwR}
                             onChange={getInputInfo}
                             style={{
-                                borderBottom: formErrors.current.pw === false ? '1px solid red' : '1px solid #aaaaaa'
+                                borderBottom: formErrors.current.password === false ? '1px solid red' : '1px solid #aaaaaa'
                             }}
                         />
                         <p>에러</p>
 
-                        <label for="checkPw">비밀번호 확인</label>
+                        <label htmlFor="checkPw">비밀번호 확인</label>
                         <input type="text"
                             placeholder='위에서 입력한 비밀번호와 동일하게 입력해주세요'
-                            name="pwCheck"
+                            name="checkPw"
                             id="checkPw"
                             maxLength={14}
                             ref={doubleCheckPw}
@@ -523,32 +541,34 @@ const Membership = () => {
                         <p>에러</p>
 
 
+
+
                         <label>주소</label>
                         <div className="rowarea address">
                             <input type="text"
                                 placeholder='우편번호'
-                                name='zoneCode'
-                                value={zoneCode}
+                                name='postalCode'
+                                value={postalCode}
                                 maxLength={5} readOnly />
                             <button id='btn' onClick={openAddress}>우편번호 검색</button>
                         </div>
                         <input type="text"
                             placeholder='도로명주소 또는 지번주소'
-                            name='address' value={address} readOnly />
+                            name='streetAddress' value={streetAddress} readOnly />
                         <input type="text"
-                            name='addressDetail'
+                            name='detailedAddress'
                             placeholder='상세주소'
                             onChange={getInputInfo}
                             style={{
-                                borderBottom: formErrors.current.addressDetail === false ? '1px solid red' : '1px solid #aaaaaa'
+                                borderBottom: formErrors.current.detailedAddress === false ? '1px solid red' : '1px solid #aaaaaa'
                             }}
                         />
                         <p></p>
 
-                        <label for="phoneNumeber">전화번호</label>
+                        <label htmlFor="phoneNumber">전화번호</label>
                         <div className='phoneNumber'>
                             <input type="text"
-                                id='phoneNumeber'
+                                id='phoneNumber'
                                 maxLength={5}
                                 placeholder='2~5자리'
                                 name='firstNumber'
@@ -580,9 +600,21 @@ const Membership = () => {
                         </div>
                         <p>에러</p>
 
+                        <label htmlFor="birthDate">생년월일</label>
+                        <input type="date"
+                            name="birthDate"
+                            id="birthDate"
+                            ref={birtydayR}
+                            onChange={getInputInfo}
+                            style={{
+                                borderBottom: formErrors.current.birthDate === false ? '1px solid red' : '1px solid #aaaaaa'
+                            }}
+                        />
+
+                        <p>에러</p>
 
 
-                        <label for="gender">성별</label>
+                        <label htmlFor="gender">성별</label>
                         <div className='genderbutton'>
                             <button type='button'
                                 id='gender'
@@ -607,7 +639,7 @@ const Membership = () => {
                             >여성</button>
                         </div>
                         <p></p>
-                        <label for='email'>이메일</label>
+                        <label htmlFor='email'>이메일</label>
                         <div className='emailArea'>
                             <input type="text" id='email' name='email' onChange={getInputInfo}
                                 style={{
