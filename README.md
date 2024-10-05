@@ -1,4 +1,7 @@
 # mokkoji_project
++ npm init
+
++ npm install
 
 + npm i 'create-react-app'
 
@@ -13,6 +16,8 @@
 + npm install react-daum-postcode
 
 + npm install react-modal
+
++ npm install axios web-vitals
 
 + npm i --save @fortawesome/fontawesome-svg-core
 
