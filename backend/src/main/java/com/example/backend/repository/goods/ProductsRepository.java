@@ -23,7 +23,7 @@ public interface ProductsRepository extends JpaRepository<Products, Long>{
 	//		+ "(p.id, p.name, p.price, p.mainImageName, p.categoryId,p.mainDescription) FROM Products p where p.categoryId=:categoryId")
 	Page<Products> findByCategoryId(String subTypeName,  Pageable pageable);
 	
-	@Query("SELECT new com.example.mokkoji_backend.domain.ProductsDTO"
+	@Query("SELECT new com.example.backend.domain.ProductsDTO"
 			+ "(p.id, p.name, p.price, p.mainImageName, p.categoryId) FROM Products p")
 	List<ProductsDTO> findList();
 	
@@ -31,10 +31,10 @@ public interface ProductsRepository extends JpaRepository<Products, Long>{
     //@Query(value = "SELECT * FROM products p WHERE p.product_id not in (:product_id) ORDER BY p.stock_count DESC LIMIT 4", nativeQuery = true)
     //List<Products> findTop4ByOrderByCountDescNative(@Param("product_id") Long product_id);
 	
-	@Query("SELECT new com.example.mokkoji_backend.domain.ProductDetailDTO(p) FROM Products p where p.id = :id")
+	@Query("SELECT new com.example.backend.domain.ProductDetailDTO(p) FROM Products p where p.id = :id")
 	ProductDetailDTO findDetailinfo(@Param("id") Long id);
 	
-	@Query("SELECT new com.example.mokkoji_backend.domain.ProductsDTO"
+	@Query("SELECT new com.example.backend.domain.ProductsDTO"
 			+ "(p.id, p.name, p.price, p.mainImageName, p.categoryId, p.mainDescription) FROM Products p WHERE p.id = :id")
 	ProductsDTO findDto(@Param("id") Long id);
 	

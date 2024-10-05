@@ -1,20 +1,17 @@
-import '../../../css/mypage/subpage/MyPageList.css'
+import '../../../css/mypage/subpage/MyPageOrders.css'
 
-function MyPageList() {
-
-    const user = JSON.parse(sessionStorage.getItem("LoginUserInfo"))
-    const items = JSON.parse(sessionStorage.getItem("goodsList"))
+function MyPageOrders() {
 
     return (
 
-        <div className='MyPageList'>
+        <div className='MyPageOrders'>
 
             {user.mypage.history
                 .slice()
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .map((list) => {
                     return (
-                        <div className='MyListDate' key={list.date}>
+                        <div className='MyOrdersDate' key={list.date}>
                             <h3>{list.date}</h3>
 
                             {list.item.slice()
@@ -22,8 +19,8 @@ function MyPageList() {
                                 .map((itemId) => {
                                     const product = items.find((good) => good.id === itemId)
                                     return (
-                                        <div className='ListItem' key={product.id}>
-                                            <div className='ListPhoto'>
+                                        <div className='OrdersItem' key={product.id}>
+                                            <div className='OrdersPhoto'>
                                                 <img src={product.productSrc[0]} alt={product.name} />
                                             </div>
                                             <div>
@@ -44,4 +41,4 @@ function MyPageList() {
     )
 }
 
-export default MyPageList;
+export default MyPageOrders;

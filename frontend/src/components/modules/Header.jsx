@@ -1,15 +1,24 @@
-import React, { useEffect, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from './action';
+import React, { useEffect, useState } from 'react';
+
 import { Link, useLocation, NavLink, useNavigate } from 'react-router-dom';
 import '../../css/header.css'
+import { apiCall } from '../../service/apiService';
 
 const Header = () => {
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const { isLoggedIn, userInfo } = useSelector(state => state);
+    const [loginInfo, setLoginInfo] = useState("");
     const locationNows = useLocation();
-
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        return JSON.parse(sessionStorage.getItem("isLoggedIn")) || false;
+    });
+    useEffect(() => {
+        const islogin = JSON.parse(sessionStorage.getItem("isLoggedIn")) || false;
+        if (islogin) {
+            setIsLoggedIn(true);
+        } else {
+            setIsLoggedIn(false);
+        }
+    }, [])
 
     useEffect(() => {
         const handleScroll = () => {
@@ -42,14 +51,28 @@ const Header = () => {
         if ((!isLoggedIn && mypage) || (!isLoggedIn && buy)) {
             navigate('/');
         }
-    }, [isLoggedIn]);
+    }, [isLoggedIn, mypage, buy]);
 
     if (locationNows.pathname.toLowerCase().includes('login')) return null;
 
-    const handleLogout = () => {
-        dispatch(logout());
+    const logout = (e) => {
+        let url = '/logout';
+        apiCall(url, 'POST', null, null)
+            .then((response) => {
+                sessionStorage.setItem("isLoggedIn", "false");
+                sessionStorage.removeItem("userData");
+                console.log(response);
+                alert('로그아웃 성공');
+                setIsLoggedIn(false);
+                setLoginInfo('');
+            }).catch((err) => {
+                if (err === '502') {
+                    alert("로그 아웃 실패, 다시하세요 ~~");
+                } else { alert(`** onLogout 시스템 오류, err=${err}`); }
+            }); //apiCall
+    }
 
-    };
+
 
     return (
         <header id="header" className="deactive">
@@ -70,7 +93,7 @@ const Header = () => {
                             {
                                 isLoggedIn ?
                                     <>
-                                        <li><NavLink onClick={handleLogout} className={({ isActive }) => (isActive ? 'active' : '')}>Logout</NavLink ></li>
+                                        <li><NavLink onClick={logout} className={({ isActive }) => (isActive ? 'active' : '')}>Logout</NavLink ></li>
                                         <li><NavLink to="/mypage" className={({ isActive }) => (isActive ? 'active' : '')}><p>Mypage</p></NavLink ></li>
                                         <li><NavLink to="/administrator" className={({ isActive }) => (isActive ? 'active' : '')}><p>Admin</p></NavLink ></li>
                                     </>
